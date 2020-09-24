@@ -36,7 +36,7 @@ type Handler struct {
 func New(ctx context.Context, config *Config) (*Handler, error) {
 	serverList := protocol.NewServerList()
 	for _, rec := range config.Receiver {
-		s, err := protocol.NewServerSpecFromPB(*rec)
+		s, err := protocol.NewServerSpecFromPB(rec)
 		if err != nil {
 			return nil, newError("failed to parse server spec").Base(err)
 		}
@@ -113,7 +113,7 @@ func (v *Handler) Process(ctx context.Context, link *transport.Link, dialer inte
 	input := link.Reader
 	output := link.Writer
 
-	ctx = context.WithValue(ctx, vmess.TestsEnabled, user.Account.(*vmess.MemoryAccount).TestsEnabled)
+	ctx = context.WithValue(ctx, vmess.AlterID, len(account.AlterIDs))
 
 	session := encoding.NewClientSession(protocol.DefaultIDHash, ctx)
 	sessionPolicy := v.policyManager.ForLevel(request.User.Level)

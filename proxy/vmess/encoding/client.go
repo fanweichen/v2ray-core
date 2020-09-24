@@ -9,12 +9,10 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
-	"fmt"
 	"hash"
 	"hash/fnv"
 	"io"
 	"os"
-	"strings"
 	vmessaead "v2ray.com/core/proxy/vmess/aead"
 
 	"golang.org/x/crypto/chacha20poly1305"
@@ -59,24 +57,16 @@ func NewClientSession(idHash protocol.IDHash, ctx context.Context) *ClientSessio
 
 	session.isAEADRequest = false
 
-	if ctxValueTestsEnabled := ctx.Value(vmess.TestsEnabled); ctxValueTestsEnabled != nil {
-		testsEnabled := ctxValueTestsEnabled.(string)
-		if strings.Contains(testsEnabled, "VMessAEAD") {
+	if ctxValueAlterID := ctx.Value(vmess.AlterID); ctxValueAlterID != nil {
+		if ctxValueAlterID == 0 {
 			session.isAEADRequest = true
 		}
 	}
 
-	if vmessexp, vmessexp_found := os.LookupEnv("VMESSAEADEXPERIMENT"); vmessexp_found {
-		if vmessexp == "y" {
-			session.isAEADRequest = true
-		}
-		if vmessexp == "n" {
+	if vmessAeadDisable, vmessAeadDisableFound := os.LookupEnv("V2RAY_VMESS_AEAD_DISABLED"); vmessAeadDisableFound {
+		if vmessAeadDisable == "true" {
 			session.isAEADRequest = false
 		}
-	}
-
-	if session.isAEADRequest {
-		fmt.Println("=======VMESSAEADEXPERIMENT ENABLED========")
 	}
 
 	copy(session.requestBodyKey[:], randomBytes[:16])
@@ -88,7 +78,7 @@ func NewClientSession(idHash protocol.IDHash, ctx context.Context) *ClientSessio
 	} else {
 		BodyKey := sha256.Sum256(session.requestBodyKey[:])
 		copy(session.responseBodyKey[:], BodyKey[:16])
-		BodyIV := sha256.Sum256(session.requestBodyKey[:])
+		BodyIV := sha256.Sum256(session.requestBodyIV[:])
 		copy(session.responseBodyIV[:], BodyIV[:16])
 	}
 

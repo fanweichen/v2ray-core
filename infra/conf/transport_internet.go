@@ -109,7 +109,8 @@ func (c *KCPConfig) Build() (proto.Message, error) {
 }
 
 type TCPConfig struct {
-	HeaderConfig json.RawMessage `json:"header"`
+	HeaderConfig        json.RawMessage `json:"header"`
+	AcceptProxyProtocol bool            `json:"acceptProxyProtocol"`
 }
 
 // Build implements Buildable.
@@ -126,14 +127,17 @@ func (c *TCPConfig) Build() (proto.Message, error) {
 		}
 		config.HeaderSettings = serial.ToTypedMessage(ts)
 	}
-
+	if c.AcceptProxyProtocol {
+		config.AcceptProxyProtocol = c.AcceptProxyProtocol
+	}
 	return config, nil
 }
 
 type WebSocketConfig struct {
-	Path    string            `json:"path"`
-	Path2   string            `json:"Path"` // The key was misspelled. For backward compatibility, we have to keep track the old key.
-	Headers map[string]string `json:"headers"`
+	Path                string            `json:"path"`
+	Path2               string            `json:"Path"` // The key was misspelled. For backward compatibility, we have to keep track the old key.
+	Headers             map[string]string `json:"headers"`
+	AcceptProxyProtocol bool              `json:"acceptProxyProtocol"`
 }
 
 // Build implements Buildable.
@@ -149,10 +153,12 @@ func (c *WebSocketConfig) Build() (proto.Message, error) {
 			Value: value,
 		})
 	}
-
 	config := &websocket.Config{
 		Path:   path,
 		Header: header,
+	}
+	if c.AcceptProxyProtocol {
+		config.AcceptProxyProtocol = c.AcceptProxyProtocol
 	}
 	return config, nil
 }
@@ -213,14 +219,18 @@ func (c *QUICConfig) Build() (proto.Message, error) {
 }
 
 type DomainSocketConfig struct {
-	Path     string `json:"path"`
-	Abstract bool   `json:"abstract"`
+	Path                string `json:"path"`
+	Abstract            bool   `json:"abstract"`
+	Padding             bool   `json:"padding"`
+	AcceptProxyProtocol bool   `json:"acceptProxyProtocol"`
 }
 
 func (c *DomainSocketConfig) Build() (proto.Message, error) {
 	return &domainsocket.Config{
-		Path:     c.Path,
-		Abstract: c.Abstract,
+		Path:                c.Path,
+		Abstract:            c.Abstract,
+		Padding:             c.Padding,
+		AcceptProxyProtocol: c.AcceptProxyProtocol,
 	}, nil
 }
 
